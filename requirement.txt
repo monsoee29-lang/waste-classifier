@@ -1,6 +1,4 @@
-torch
-torchvision
-transformers
-huggingface_hub
 gradio
+tensorflow
+numpy
 Pillow
