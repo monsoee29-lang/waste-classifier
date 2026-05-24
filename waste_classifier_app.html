@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WasteClassifier — Ei Mon Soe</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b1a12;
+  --surface: #111f17;
+  --surface2: #162a1f;
+  --border: rgba(78,203,130,0.12);
+  --border2: rgba(78,203,130,0.22);
+  --accent: #3ddc7a;
+  --accent2: #1a8a44;
+  --accent-glow: rgba(61,220,122,0.18);
+  --text: #e8f5ee;
+  --text-muted: rgba(232,245,238,0.5);
+  --text-dim: rgba(232,245,238,0.28);
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Outfit', sans-serif;
+  --display: 'Syne', sans-serif;
+  --radius: 14px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* grid noise texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(61,220,122,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(61,220,122,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── NAV ── */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(11,26,18,0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2.5rem;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-brand {
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -0.3px;
+}
+.nav-icon {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+}
+.nav-links { display: flex; gap: 1.8rem; align-items: center; }
+.nav-links a {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--accent); }
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  padding: 5rem 2rem 4rem;
+  text-align: center;
+  overflow: hidden;
+  z-index: 1;
+}
+.hero-glow {
+  position: absolute;
+  top: -80px; left: 50%;
+  transform: translateX(-50%);
+  width: 600px; height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(61,220,122,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  background: rgba(61,220,122,0.08);
+  border: 1px solid rgba(61,220,122,0.2);
+  border-radius: 100px;
+  padding: 5px 14px;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.5px;
+}
+.hero-tag::before {
+  content: '';
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+.hero h1 {
+  font-family: 'Syne', 'Georgia', serif;
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -1.5px;
+  margin-bottom: 1.2rem;
+  color: var(--text);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+.hero h1 .hl {
+  color: var(--accent);
+  position: relative;
+}
+.hero h1 .hl::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent);
+  opacity: 0.4;
+  border-radius: 2px;
+}
+.hero p {
+  font-size: 16px;
+  font-weight: 300;
+  color: var(--text-muted);
+  max-width: 520px;
+  margin: 0 auto 2rem;
+  line-height: 1.75;
+}
+.hero-stats {
+  display: inline-flex;
+  gap: 0;
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.h-stat {
+  padding: 0.75rem 1.5rem;
+  border-right: 1px solid var(--border2);
+  text-align: center;
+}
+.h-stat:last-child { border-right: none; }
+.h-stat .v {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--accent);
+  display: block;
+  line-height: 1;
+}
+.h-stat .l {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 4px;
+  display: block;
+}
+
+/* ── MAIN ── */
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  flex: 1;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── UPLOAD CARD ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: var(--border2); }
+
+.upload-zone {
+  position: relative;
+  padding: 3.5rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  border: 2px dashed rgba(61,220,122,0.2);
+  margin: 1.5rem;
+  border-radius: 10px;
+  transition: all 0.25s;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+.upload-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+.upload-ring {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  border: 2px solid rgba(61,220,122,0.25);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.2rem;
+  background: rgba(61,220,122,0.06);
+  position: relative;
+}
+.upload-ring::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px dashed rgba(61,220,122,0.12);
+}
+.upload-ring svg { width: 28px; height: 28px; stroke: var(--accent); fill: none; stroke-width: 1.5; }
+.upload-zone h3 {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  color: var(--text);
+}
+.upload-zone p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 1.2rem;
+}
+.btn-browse {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  pointer-events: none;
+  letter-spacing: 0.2px;
+}
+
+/* ── PREVIEW ── */
+#preview-section { display: none; padding: 1.5rem; }
+.preview-grid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+.preview-frame {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border2);
+  aspect-ratio: 1;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+}
+.preview-frame img { width: 100%; height: 100%; object-fit: cover; }
+.preview-meta { display: flex; flex-direction: column; gap: 0.6rem; }
+.meta-row label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  display: block;
+  margin-bottom: 2px;
+  font-family: var(--mono);
+}
+.meta-row span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  font-family: var(--mono);
+}
+.note-box {
+  background: rgba(255,193,7,0.06);
+  border: 1px solid rgba(255,193,7,0.15);
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  font-size: 12px;
+  color: rgba(255,210,80,0.85);
+  line-height: 1.6;
+  margin-top: 0.4rem;
+}
+.btn-classify {
+  width: 100%;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  padding: 13px;
+  border-radius: 10px;
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+.btn-classify:hover { background: #52e88a; transform: translateY(-1px); }
+.btn-classify:active { transform: translateY(0); }
+.btn-classify:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+.btn-reset {
+  width: 100%;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border2);
+  padding: 9px;
+  border-radius: 10px;
+  font-family: var(--sans);
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: all 0.2s;
+}
+.btn-reset:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── LOADING ── */
+#loading {
+  display: none;
+  padding: 2.5rem;
+  text-align: center;
+}
+.loader-ring {
+  width: 44px; height: 44px;
+  border: 3px solid rgba(61,220,122,0.1);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  margin: 0 auto 1rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+.loading-steps {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 0.8rem;
+  flex-wrap: wrap;
+}
+.step-chip {
+  font-size: 11px;
+  font-family: var(--mono);
+  padding: 3px 10px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  transition: all 0.3s;
+}
+.step-chip.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+
+/* ── RESULT ── */
+#result-section { display: none; }
+.result-header-bar {
+  background: linear-gradient(135deg, var(--surface2), var(--bg));
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.result-header-bar h2 {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+.result-body { padding: 1.5rem; }
+
+/* TOP PREDICTION */
+.top-pred {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+  padding: 1.2rem;
+  background: var(--surface2);
+  border-radius: 12px;
+  border: 1px solid var(--border2);
+}
+.pred-badge {
+  width: 60px; height: 60px;
+  border-radius: 14px;
+  background: rgba(61,220,122,0.1);
+  border: 1px solid rgba(61,220,122,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px;
+  flex-shrink: 0;
+}
+.pred-name {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  color: var(--text);
+}
+.pred-conf-text {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  margin-top: 3px;
+  font-weight: 500;
+}
+.conf-track {
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.conf-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  border-radius: 2px;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* TOP-5 */
+.section-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 0.8rem;
+}
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+.bar-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  width: 190px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.35;
+}
+.bar-fill.top { opacity: 1; }
+.bar-pct {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  width: 44px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.bar-fill.top + .bar-pct,
+.bar-row:first-child .bar-pct { color: var(--accent); }
+
+/* INFO CARDS */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.info-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.2rem;
+  transition: border-color 0.2s;
+}
+.info-card:hover { border-color: var(--border2); }
+.info-icon { font-size: 22px; margin-bottom: 0.6rem; }
+.info-card h4 {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 0.4rem;
+}
+.info-card .ic-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.5;
+}
+.info-card small {
+  font-size: 11px;
+  color: var(--text-dim);
+  display: block;
+  margin-top: 2px;
+}
+.badge-recyclable {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--mono);
+}
+.badge-yes { background: rgba(61,220,122,0.12); color: var(--accent); border: 1px solid rgba(61,220,122,0.25); }
+.badge-compost { background: rgba(180,130,60,0.12); color: #d4a84b; border: 1px solid rgba(200,160,60,0.25); }
+.badge-special { background: rgba(100,100,220,0.12); color: #9090ee; border: 1px solid rgba(120,120,220,0.25); }
+
+/* ── ABOUT / HOW IT WORKS ── */
+.section-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.section-card h3 {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 1.2rem;
+}
+.about-inner {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.avatar-ring {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 2px solid rgba(61,220,122,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.about-info h4 {
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+.about-info p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.social-links { display: flex; gap: 7px; flex-wrap: wrap; }
+.social-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--border2);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--surface2);
+  transition: all 0.2s;
+}
+.social-btn:hover { border-color: var(--accent); color: var(--accent); }
+.social-btn svg { width: 13px; height: 13px; fill: currentColor; }
+
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+.how-step {
+  text-align: center;
+  padding: 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+}
+.how-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+  letter-spacing: 1px;
+}
+.how-icon { font-size: 26px; margin-bottom: 0.5rem; }
+.how-step h4 {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+}
+.how-step p { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+/* ── MODEL ARCHITECTURE ── */
+.arch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+.arch-chip {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  text-align: center;
+}
+.arch-chip .aval {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent);
+  display: block;
+}
+.arch-chip .albl {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: 4px;
+  display: block;
+  font-family: var(--mono);
+}
+
+/* ── ERROR ── */
+.error-box {
+  background: rgba(220,60,60,0.06);
+  border: 1px solid rgba(220,60,60,0.2);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  font-size: 13px;
+  color: #f08080;
+  margin-top: 1rem;
+  display: none;
+  line-height: 1.6;
+  font-family: var(--mono);
+}
+
+/* ── FOOTER ── */
+footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 1.5rem 2rem;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+footer p {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+}
+footer a { color: var(--text-muted); text-decoration: none; }
+footer a:hover { color: var(--accent); }
+
+@media (max-width: 600px) {
+  .preview-grid { grid-template-columns: 1fr; }
+  .hero-stats { flex-direction: column; border-radius: 12px; }
+  .h-stat { border-right: none; border-bottom: 1px solid var(--border2); }
+  .h-stat:last-child { border-bottom: none; }
+  nav { padding: 0 1.2rem; }
+  .bar-name { width: 130px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <div class="nav-icon">♻</div>
+    WasteClassifier
+  </div>
+  <div class="nav-links">
+    <a href="#classifier">Classify</a>
+    <a href="#model">Model</a>
+    <a href="#about">About</a>
+    <a href="https://github.com/monsoee29-lang" target="_blank">GitHub ↗</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-tag">Deep Learning · Computer Vision · CNN</div>
+  <h1>Recyclable &amp; Household<br><span class="hl">Waste Classifier</span></h1>
+  <p>Upload any waste item photo. The CNN model classifies it into one of <strong>30 categories</strong> and gives disposal guidance — powered by real AI inference.</p>
+  <div class="hero-stats">
+    <div class="h-stat"><span class="v">30</span><span class="l">Categories</span></div>
+    <div class="h-stat"><span class="v" id="hero-acc">~69%</span><span class="l">Val Accuracy</span></div>
+    <div class="h-stat"><span class="v">CNN</span><span class="l">Architecture</span></div>
+    <div class="h-stat"><span class="v">4</span><span class="l">Conv Blocks</span></div>
+  </div>
+</div>
+
+<main>
+
+  <!-- UPLOAD CARD -->
+  <div class="card" id="classifier">
+    <div class="upload-zone" id="drop-zone">
+      <input type="file" id="file-input" accept="image/*">
+      <div class="upload-ring">
+        <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+      </div>
+      <h3>Drop your image here</h3>
+      <p>Supports JPG, PNG, WEBP · Max 10 MB</p>
+      <div class="btn-browse">Browse Files</div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div id="preview-section">
+      <div class="preview-grid">
+        <div class="preview-frame">
+          <img id="preview-img" src="" alt="Preview">
+        </div>
+        <div class="preview-meta">
+          <div class="meta-row">
+            <label>File name</label>
+            <span id="file-name">—</span>
+          </div>
+          <div class="meta-row">
+            <label>File size</label>
+            <span id="file-size">—</span>
+          </div>
+          <div class="meta-row">
+            <label>Model</label>
+            <span>30-class CNN · Trained on waste dataset</span>
+          </div>
+          <div class="error-box" id="error-box"></div>
+          <button class="btn-classify" id="classify-btn" onclick="classify()">⚡ Classify Waste</button>
+          <button class="btn-reset" onclick="reset()">Choose another image</button>
+        </div>
+      </div>
+
+      <!-- LOADING -->
+      <div id="loading">
+        <div class="loader-ring"></div>
+        <div class="loading-text" id="loading-text">Sending to Claude Vision...</div>
+        <div class="loading-steps">
+          <div class="step-chip active" id="step1">Encoding image</div>
+          <div class="step-chip" id="step2">Running inference</div>
+          <div class="step-chip" id="step3">Parsing results</div>
+        </div>
+      </div>
+
+      <!-- RESULT -->
+      <div id="result-section">
+        <div class="card" style="margin: 0 0 1rem 0;">
+          <div class="result-header-bar">
+            <div class="live-dot"></div>
+            <h2>Classification Result</h2>
+          </div>
+          <div class="result-body">
+            <div class="top-pred">
+              <div class="pred-badge" id="pred-emoji">♻</div>
+              <div style="flex:1">
+                <div class="pred-name" id="pred-label">—</div>
+                <div class="pred-conf-text" id="pred-conf">—</div>
+                <div class="conf-track">
+                  <div class="conf-fill" id="conf-bar" style="width:0%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="section-label">Top 5 Predictions</div>
+            <div id="top5-bars"></div>
+          </div>
+        </div>
+        <div class="info-grid" id="info-cards"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODEL INFO -->
+  <div class="section-card" id="model">
+    <h3>Model Architecture</h3>
+    <div class="arch-grid">
+      <div class="arch-chip"><span class="aval">4</span><span class="albl">Conv Blocks</span></div>
+      <div class="arch-chip"><span class="aval">30</span><span class="albl">Output Classes</span></div>
+      <div class="arch-chip"><span class="aval">~69%</span><span class="albl">Val Accuracy</span></div>
+      <div class="arch-chip"><span class="aval">224px</span><span class="albl">Input Size</span></div>
+      <div class="arch-chip"><span class="aval">Adam</span><span class="albl">Optimizer</span></div>
+      <div class="arch-chip"><span class="aval">EarlyStp</span><span class="albl">Regularization</span></div>
+    </div>
+    <div style="margin-top:1.2rem; font-size:12px; color:var(--text-muted); line-height:1.7;">
+      Custom 4-block CNN trained on the <em>Recyclable &amp; Household Waste Classification</em> dataset with 30 categories. Each block uses Conv2D → BatchNorm → ReLU → MaxPool. The classifier head uses GlobalAveragePooling + Dense + Dropout + Softmax. Best weights saved via ModelCheckpoint on validation accuracy.
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="section-card">
+    <h3>How It Works</h3>
+    <div class="how-grid">
+      <div class="how-step">
+        <div class="how-num">STEP 01</div>
+        <div class="how-icon">📷</div>
+        <h4>Upload Image</h4>
+        <p>Drop or browse any photo of a waste item</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">STEP 02</div>
+        <div class="how-icon">🧠</div>
+        <h4>AI Inference</h4>
+        <p>Claude Vision analyzes against 30 waste categories from your trained model</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">STEP 03</div>
+        <div class="how-icon">📊</div>
+        <h4>Top-5 Results</h4>
+        <p>Confidence scores for all top predictions</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">STEP 04</div>
+        <div class="how-icon">♻</div>
+        <h4>Disposal Tip</h4>
+        <p>Recycling or composting guidance for each waste type</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="section-card" id="about">
+    <h3>About This Project</h3>
+    <div class="about-inner">
+      <div class="avatar-ring">EMS</div>
+      <div class="about-info">
+        <h4>Ei Mon Soe</h4>
+        <p>Deep Learning Final Project · Recyclable &amp; Household Waste Classification · 30 Categories</p>
+        <div class="social-links">
+          <a class="social-btn" href="https://www.linkedin.com/in/ei-mon-soe-6aa022257" target="_blank">
+            <svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+            LinkedIn
+          </a>
+          <a class="social-btn" href="https://github.com/monsoee29-lang" target="_blank">
+            <svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            GitHub
+          </a>
+          <a class="social-btn" href="mailto:monsoee29@gmail.com">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Email
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>Built by <a href="https://www.linkedin.com/in/ei-mon-soe-6aa022257" target="_blank">Ei Mon Soe</a> &nbsp;·&nbsp; Deep Learning Final Project &nbsp;·&nbsp; Custom CNN · 30 Waste Categories &nbsp;·&nbsp; <a href="https://github.com/monsoee29-lang" target="_blank">GitHub ↗</a></p>
+</footer>
+
+<script>
+// ── EXACT 30 CATEGORIES from label_map.json ──
+const LABEL_MAP = {
+  0:"aerosol_cans", 1:"aluminum_food_cans", 2:"aluminum_soda_cans",
+  3:"cardboard_boxes", 4:"cardboard_packaging", 5:"clothing",
+  6:"coffee_grounds", 7:"disposable_plastic_cutlery", 8:"eggshells",
+  9:"food_waste", 10:"glass_beverage_bottles", 11:"glass_cosmetic_containers",
+  12:"glass_food_jars", 13:"magazines", 14:"newspaper",
+  15:"office_paper", 16:"paper_cups", 17:"plastic_cup_lids",
+  18:"plastic_detergent_bottles", 19:"plastic_food_containers",
+  20:"plastic_shopping_bags", 21:"plastic_soda_bottles", 22:"plastic_straws",
+  23:"plastic_trash_bags", 24:"plastic_water_bottles", 25:"shoes",
+  26:"steel_food_cans", 27:"styrofoam_cups", 28:"styrofoam_food_containers",
+  29:"tea_bags"
+};
+
+const CATEGORIES = Object.values(LABEL_MAP);
+
+// Human-readable labels
+const LABELS = {
+  "aerosol_cans": "Aerosol Cans",
+  "aluminum_food_cans": "Aluminum Food Cans",
+  "aluminum_soda_cans": "Aluminum Soda Cans",
+  "cardboard_boxes": "Cardboard Boxes",
+  "cardboard_packaging": "Cardboard Packaging",
+  "clothing": "Clothing",
+  "coffee_grounds": "Coffee Grounds",
+  "disposable_plastic_cutlery": "Disposable Plastic Cutlery",
+  "eggshells": "Eggshells",
+  "food_waste": "Food Waste",
+  "glass_beverage_bottles": "Glass Beverage Bottles",
+  "glass_cosmetic_containers": "Glass Cosmetic Containers",
+  "glass_food_jars": "Glass Food Jars",
+  "magazines": "Magazines",
+  "newspaper": "Newspaper",
+  "office_paper": "Office Paper",
+  "paper_cups": "Paper Cups",
+  "plastic_cup_lids": "Plastic Cup Lids",
+  "plastic_detergent_bottles": "Plastic Detergent Bottles",
+  "plastic_food_containers": "Plastic Food Containers",
+  "plastic_shopping_bags": "Plastic Shopping Bags",
+  "plastic_soda_bottles": "Plastic Soda Bottles",
+  "plastic_straws": "Plastic Straws",
+  "plastic_trash_bags": "Plastic Trash Bags",
+  "plastic_water_bottles": "Plastic Water Bottles",
+  "shoes": "Shoes",
+  "steel_food_cans": "Steel Food Cans",
+  "styrofoam_cups": "Styrofoam Cups",
+  "styrofoam_food_containers": "Styrofoam Food Containers",
+  "tea_bags": "Tea Bags"
+};
+
+const EMOJIS = {
+  "aerosol_cans":"🧴","aluminum_food_cans":"🥫","aluminum_soda_cans":"🥤",
+  "cardboard_boxes":"📦","cardboard_packaging":"📦","clothing":"👕",
+  "coffee_grounds":"☕","disposable_plastic_cutlery":"🍴","eggshells":"🥚",
+  "food_waste":"🍎","glass_beverage_bottles":"🍾","glass_cosmetic_containers":"💄",
+  "glass_food_jars":"🫙","magazines":"📰","newspaper":"📄","office_paper":"📋",
+  "paper_cups":"☕","plastic_cup_lids":"🥤","plastic_detergent_bottles":"🧴",
+  "plastic_food_containers":"🥡","plastic_shopping_bags":"🛍","plastic_soda_bottles":"🥤",
+  "plastic_straws":"🥤","plastic_trash_bags":"🗑","plastic_water_bottles":"💧",
+  "shoes":"👟","steel_food_cans":"🥫","styrofoam_cups":"🥤",
+  "styrofoam_food_containers":"📦","tea_bags":"🍵"
+};
+
+// Recycling category for each waste type
+const RECYCLE_TYPE = {
+  "aerosol_cans": "recycle",       // empty, no cap
+  "aluminum_food_cans": "recycle",
+  "aluminum_soda_cans": "recycle",
+  "cardboard_boxes": "recycle",
+  "cardboard_packaging": "recycle",
+  "clothing": "donate",
+  "coffee_grounds": "compost",
+  "disposable_plastic_cutlery": "landfill",
+  "eggshells": "compost",
+  "food_waste": "compost",
+  "glass_beverage_bottles": "recycle",
+  "glass_cosmetic_containers": "recycle",
+  "glass_food_jars": "recycle",
+  "magazines": "recycle",
+  "newspaper": "recycle",
+  "office_paper": "recycle",
+  "paper_cups": "landfill",        // plastic-lined
+  "plastic_cup_lids": "landfill",
+  "plastic_detergent_bottles": "recycle",
+  "plastic_food_containers": "recycle",
+  "plastic_shopping_bags": "special",  // drop-off only
+  "plastic_soda_bottles": "recycle",
+  "plastic_straws": "landfill",
+  "plastic_trash_bags": "landfill",
+  "plastic_water_bottles": "recycle",
+  "shoes": "donate",
+  "steel_food_cans": "recycle",
+  "styrofoam_cups": "landfill",
+  "styrofoam_food_containers": "landfill",
+  "tea_bags": "compost"
+};
+
+const RECYCLE_LABELS = {
+  recycle: { text: "✅ Recyclable", cls: "badge-yes" },
+  compost: { text: "🌱 Compostable", cls: "badge-compost" },
+  donate:  { text: "💝 Donate", cls: "badge-compost" },
+  special: { text: "⚠ Special Drop-off", cls: "badge-special" },
+  landfill:{ text: "🗑 Landfill", cls: "badge-special" }
+};
+
+const TIPS = {
+  "aerosol_cans": "Empty completely before recycling. Remove the cap. Never puncture.",
+  "aluminum_food_cans": "Rinse clean. Crush to save space. Aluminum is infinitely recyclable!",
+  "aluminum_soda_cans": "Rinse first. One of the most valuable recyclables — always recycle.",
+  "cardboard_boxes": "Break down flat. Keep dry. Remove tape and staples when possible.",
+  "cardboard_packaging": "Flatten and keep dry. Most curbside programs accept it.",
+  "clothing": "Donate if wearable. Use textile-recycling bins for worn or torn items.",
+  "coffee_grounds": "Great compost addition — enriches soil with nitrogen. Can also deter pests.",
+  "disposable_plastic_cutlery": "Generally not recyclable. Reduce use; switch to reusable cutlery.",
+  "eggshells": "Compost them. They add calcium to soil and deter slugs in the garden.",
+  "food_waste": "Compost if possible — reduces landfill methane significantly.",
+  "glass_beverage_bottles": "Rinse and recycle. Glass is 100% recyclable indefinitely.",
+  "glass_cosmetic_containers": "Rinse out. Check if local program accepts it — most do.",
+  "glass_food_jars": "Rinse and recycle. Lids can often be recycled separately as metal.",
+  "magazines": "Paper recycling bin. Keep dry. Glossy paper is still recyclable.",
+  "newspaper": "Paper recycling. Tear up and compost if your program doesn't accept it.",
+  "office_paper": "Paper recycling. Shred sensitive documents first.",
+  "paper_cups": "Most paper cups have a plastic lining — check local guidelines. Often landfill.",
+  "plastic_cup_lids": "Usually not recyclable curbside — check number on bottom.",
+  "plastic_detergent_bottles": "Rinse well and recycle. HDPE (#2) is widely accepted.",
+  "plastic_food_containers": "Rinse clean. Check the recycling number. #1 and #2 widely accepted.",
+  "plastic_shopping_bags": "Do NOT put in curbside bin. Return to store drop-off locations.",
+  "plastic_soda_bottles": "Rinse and recycle. PET (#1) — highly recyclable.",
+  "plastic_straws": "Not recyclable curbside. Switch to reusable or paper straws.",
+  "plastic_trash_bags": "Not recyclable. Keep for landfill or check plastic film drop-offs.",
+  "plastic_water_bottles": "Rinse, crush, recycle. PET plastic — widely accepted curbside.",
+  "shoes": "Donate wearable shoes. Many brands (Nike, etc.) have take-back programs.",
+  "steel_food_cans": "Rinse clean. Steel/tin cans are highly recyclable — metal recycling bin.",
+  "styrofoam_cups": "Not accepted by most curbside programs. Look for foam drop-off sites.",
+  "styrofoam_food_containers": "Rarely recyclable curbside. Reduce use; some cities have drop-offs.",
+  "tea_bags": "Compostable if paper-based — check for plastic mesh first. Remove staple."
+};
+
+// ── STATE ──
+let selectedFile = null;
+let imageBase64 = null;
+
+// ── Hugging Face Space endpoint — update YOUR_USERNAME/YOUR_SPACE_NAME ──
+const HF_API = "https://eimonsoe-waste-classifier.hf.space/run/predict";
+
+const fileInput = document.getElementById('file-input');
+const dropZone = document.getElementById('drop-zone');
+
+fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+
+function handleFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const dataUrl = e.target.result;
+    imageBase64 = dataUrl.split(',')[1];
+    document.getElementById('preview-img').src = dataUrl;
+    document.getElementById('file-name').textContent = file.name;
+    document.getElementById('file-size').textContent = (file.size / 1024).toFixed(1) + ' KB';
+    dropZone.style.display = 'none';
+    document.getElementById('preview-section').style.display = 'block';
+    document.getElementById('result-section').style.display = 'none';
+    document.getElementById('error-box').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function reset() {
+  selectedFile = null;
+  imageBase64 = null;
+  fileInput.value = '';
+  dropZone.style.display = '';
+  document.getElementById('preview-section').style.display = 'none';
+  document.getElementById('result-section').style.display = 'none';
+  document.getElementById('error-box').style.display = 'none';
+}
+
+function setLoadingStep(n) {
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById('step' + i).className = 'step-chip' + (i <= n ? ' active' : '');
+  }
+}
+
+async function classify() {
+  if (!imageBase64) return;
+
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('result-section').style.display = 'none';
+  document.getElementById('error-box').style.display = 'none';
+  document.getElementById('classify-btn').disabled = true;
+
+  setLoadingStep(1);
+  document.getElementById('loading-text').textContent = 'Sending image to model...';
+
+  try {
+    // Gradio REST API format for Hugging Face Spaces
+    const dataUrl = 'data:' + (selectedFile.type || 'image/jpeg') + ';base64,' + imageBase64;
+
+    setLoadingStep(2);
+    document.getElementById('loading-text').textContent = 'Running CNN inference...';
+
+    const response = await fetch(HF_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: [dataUrl] })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server error ${response.status} — make sure your Hugging Face Space is running.`);
+    }
+
+    setLoadingStep(3);
+    document.getElementById('loading-text').textContent = 'Parsing results...';
+
+    const json = await response.json();
+
+    // Gradio returns { data: [ { label: "...", confidences: [{label,confidence},...] } ] }
+    const output = json.data[0];
+
+    let predictions;
+    if (output && output.confidences) {
+      // Gradio Label component output
+      predictions = output.confidences.slice(0, 5).map(c => ({
+        label: c.label.toLowerCase().replace(/ /g, '_'),
+        confidence: c.confidence
+      }));
+    } else if (Array.isArray(output)) {
+      // Direct array format
+      predictions = output.slice(0, 5);
+    } else {
+      throw new Error('Unexpected response format from model.');
+    }
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('classify-btn').disabled = false;
+    document.getElementById('result-section').style.display = 'block';
+
+    showResults(predictions);
+
+  } catch (err) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('classify-btn').disabled = false;
+    const errBox = document.getElementById('error-box');
+    errBox.style.display = 'block';
+    errBox.textContent = '⚠ ' + err.message;
+    console.error(err);
+  }
+}
+
+function showResults(predictions) {
+  const top = predictions[0];
+  const pct = (top.confidence * 100).toFixed(1);
+  const labelKey = top.label;
+  const humanLabel = LABELS[labelKey] || labelKey.replace(/_/g, ' ');
+
+  document.getElementById('pred-emoji').textContent = EMOJIS[labelKey] || '♻';
+  document.getElementById('pred-label').textContent = humanLabel;
+  document.getElementById('pred-conf').textContent = `${pct}% confidence`;
+  setTimeout(() => {
+    document.getElementById('conf-bar').style.width = pct + '%';
+  }, 100);
+
+  // Top-5 bars
+  const top5Html = predictions.slice(0, 5).map((r, i) => {
+    const p = (r.confidence * 100).toFixed(1);
+    const lbl = LABELS[r.label] || r.label.replace(/_/g, ' ');
+    return `
+      <div class="bar-row">
+        <div class="bar-name" title="${lbl}">${lbl}</div>
+        <div class="bar-track">
+          <div class="bar-fill ${i === 0 ? 'top' : ''}" style="width:0%" data-w="${p}%"></div>
+        </div>
+        <div class="bar-pct">${p}%</div>
+      </div>`;
+  }).join('');
+  document.getElementById('top5-bars').innerHTML = top5Html;
+  setTimeout(() => {
+    document.querySelectorAll('.bar-fill').forEach(el => {
+      el.style.width = el.dataset.w;
+    });
+  }, 150);
+
+  // Info cards
+  const recycleType = RECYCLE_TYPE[labelKey] || 'special';
+  const recycleInfo = RECYCLE_LABELS[recycleType];
+  const tip = TIPS[labelKey] || 'Check your local recycling guidelines for proper disposal.';
+
+  document.getElementById('info-cards').innerHTML = `
+    <div class="info-card">
+      <div class="info-icon">🏷</div>
+      <h4>Waste Category</h4>
+      <div class="ic-val">${humanLabel}</div>
+      <small>Class ${Object.keys(LABELS).indexOf(labelKey)} of 30</small>
+    </div>
+    <div class="info-card">
+      <div class="info-icon">♻</div>
+      <h4>Disposal Method</h4>
+      <div class="ic-val"><span class="badge-recyclable ${recycleInfo.cls}">${recycleInfo.text}</span></div>
+      <small>Check local guidelines</small>
+    </div>
+    <div class="info-card" style="grid-column: span 1;">
+      <div class="info-icon">💡</div>
+      <h4>Disposal Tip</h4>
+      <div class="ic-val" style="font-size:13px; font-weight:400; line-height:1.65; color:var(--text-muted);">${tip}</div>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
