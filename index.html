@@ -1168,36 +1168,11 @@ async function classify() {
       throw new Error(`Result error ${resultRes.status} — could not retrieve prediction.`);
     }
     const sseText = await resultRes.text();
-    console.log('SSE raw response:', sseText);
 
-    // Find the last "data:" line (Gradio may send heartbeats before the result)
-    const dataLines = sseText.split('\n').filter(l => l.startsWith('data:'));
-    if (!dataLines.length) throw new Error('No data returned from model stream.');
-    const lastDataLine = dataLines[dataLines.length - 1];
-    const parsed = JSON.parse(lastDataLine.slice(5).trim()); // remove "data:" prefix
+    // DEBUG: show raw SSE on screen so we can see what Gradio actually returns
+    throw new Error('DEBUG raw SSE: ' + sseText.slice(0, 600));
 
-    // Gradio 6 SSE wraps result as { data: [...] } or directly as [...]
-    const rawOutput = Array.isArray(parsed) ? parsed[0] : (parsed.data ? parsed.data[0] : parsed);
-    console.log('Parsed output:', rawOutput);
-
-    let predictions;
-    if (rawOutput && rawOutput.confidences) {
-      // Gradio Label component: { label, confidences: [{label, confidence}] }
-      predictions = rawOutput.confidences.slice(0, 5).map(c => ({
-        label: c.label.toLowerCase().replace(/ /g, '_'),
-        confidence: c.confidence
-      }));
-    } else if (rawOutput && typeof rawOutput === 'object' && !Array.isArray(rawOutput)) {
-      // Plain object like { "Aluminum Soda Cans": 0.9, ... }
-      predictions = Object.entries(rawOutput).slice(0, 5).map(([k, v]) => ({
-        label: k.toLowerCase().replace(/ /g, '_'),
-        confidence: v
-      }));
-    } else if (Array.isArray(rawOutput)) {
-      predictions = rawOutput.slice(0, 5);
-    } else {
-      throw new Error(`Unexpected response format: ${JSON.stringify(rawOutput).slice(0, 200)}`);
-    }
+    let predictions = [];
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('classify-btn').disabled = false;
