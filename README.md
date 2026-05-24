@@ -18,7 +18,7 @@ Upload any waste item photo and the model returns the top 5 predicted categories
 | Classes | 30 waste categories |
 | Model | Custom CNN (4 convolutional blocks) |
 | Input size | 128 × 128 RGB |
-| Validation accuracy | ~69% |
+| Validation accuracy | ~73% |
 | Framework | TensorFlow / Keras |
 | Deployment | Gradio on Hugging Face Spaces |
 
